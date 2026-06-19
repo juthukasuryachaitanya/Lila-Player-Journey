@@ -19,23 +19,6 @@ function rampColor(stops, t) {
   return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]
 }
 
-const lerp = (a, b, t) => a + (b - a) * t
-
-// Trace a path through canvas-space points as a smooth curve (quadratic through midpoints).
-function tracePath(ctx, pts) {
-  if (pts.length < 2) return
-  ctx.beginPath()
-  ctx.moveTo(pts[0][0], pts[0][1])
-  if (pts.length === 2) { ctx.lineTo(pts[1][0], pts[1][1]); return }
-  for (let i = 1; i < pts.length - 1; i++) {
-    const xc = (pts[i][0] + pts[i + 1][0]) / 2
-    const yc = (pts[i][1] + pts[i + 1][1]) / 2
-    ctx.quadraticCurveTo(pts[i][0], pts[i][1], xc, yc)
-  }
-  const n = pts.length
-  ctx.quadraticCurveTo(pts[n - 2][0], pts[n - 2][1], pts[n - 1][0], pts[n - 1][1])
-}
-
 // ---- event marker shapes ------------------------------------------------------------
 function drawMarker(ctx, code, x, y, r) {
   const g = GROUP_OF_CODE[code]
@@ -126,24 +109,13 @@ export default function MapCanvas({
       if (e[i] === EVENT.Position || e[i] === EVENT.BotPosition) pl.pts.push([u[i], v[i], ts[i]])
       else pl.events.push([u[i], v[i], ts[i], e[i]])
     }
+    let tMin = Infinity, tMax = -Infinity
     players.forEach((pl) => {
       pl.pts.sort((a, c) => a[2] - c[2])
-      // light 3-point moving average to take the jitter out of the path (keeps ts)
-      const raw = pl.pts
-      if (raw.length >= 3) {
-        const sm = []
-        for (let i = 0; i < raw.length; i++) {
-          const a = raw[Math.max(0, i - 1)], b = raw[i], c = raw[Math.min(raw.length - 1, i + 1)]
-          sm.push([(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, b[2]])
-        }
-        pl.pts = sm
-      }
-      let lo = Infinity, hi = -Infinity
-      pl.pts.forEach((q) => { if (q[2] < lo) lo = q[2]; if (q[2] > hi) hi = q[2] })
-      pl.events.forEach((q) => { if (q[2] < lo) lo = q[2]; if (q[2] > hi) hi = q[2] })
-      pl.tmin = lo; pl.tmax = hi
+      pl.pts.forEach((q) => { if (q[2] < tMin) tMin = q[2]; if (q[2] > tMax) tMax = q[2] })
+      pl.events.forEach((q) => { if (q[2] < tMin) tMin = q[2]; if (q[2] > tMax) tMax = q[2] })
     })
-    return { players: [...players.values()] }
+    return { players: [...players.values()], tMin, tMax }
   }, [data, mode, selectedMatch, showHumans, showBots])
 
   // surface stats up to the parent (counts shown in the inspector)
@@ -219,56 +191,32 @@ export default function MapCanvas({
     }
 
     if (mode === 'match' && journeys) {
-      const { players } = journeys
+      const { players, tMin, tMax } = journeys
       const prog = progressOverride ?? playback.progress
+      const cutoff = tMin + (tMax - tMin) * prog
       players.forEach((pl) => {
         const col = pl.bot ? COLORS.bot : COLORS.human
-        const P = pl.pts
-        const N = P.length
-        let headTs = pl.tmax
-
-        if (N >= 2) {
-          // reveal by fractional index so motion is continuous, not point-to-point hops
-          const f = prog * (N - 1)
-          const hi = Math.min(N - 1, Math.floor(f))
-          const frac = f - hi
-          const nx = Math.min(N - 1, hi + 1)
-          const hx = lerp(P[hi][0], P[nx][0], frac)
-          const hy = lerp(P[hi][1], P[nx][1], frac)
-          headTs = lerp(P[hi][2], P[nx][2], frac)
-
-          // trail = revealed samples + the interpolated head, in canvas space
-          const trail = []
-          for (let i = 0; i <= hi; i++) trail.push([P[i][0] * CANVAS, P[i][1] * CANVAS])
-          trail.push([hx * CANVAS, hy * CANVAS])
-
-          if (trail.length > 1) {
-            tracePath(ctx, trail)
-            ctx.lineWidth = pl.bot ? 2.4 : 3.6
-            ctx.strokeStyle = col
-            ctx.globalAlpha = pl.bot ? 0.5 : 0.85
-            ctx.lineJoin = 'round'; ctx.lineCap = 'round'
-            ctx.stroke(); ctx.globalAlpha = 1
-          }
-          // soft glow + solid head dot
-          const cx = hx * CANVAS, cy = hy * CANVAS
-          ctx.globalAlpha = 0.18; ctx.fillStyle = col
-          ctx.beginPath(); ctx.arc(cx, cy, pl.bot ? 11 : 15, 0, Math.PI * 2); ctx.fill()
-          ctx.globalAlpha = 1
-          ctx.beginPath(); ctx.arc(cx, cy, pl.bot ? 5 : 7, 0, Math.PI * 2)
+        const pts = pl.pts.filter((q) => q[2] <= cutoff)
+        if (pts.length > 1) {
+          ctx.beginPath()
+          ctx.moveTo(pts[0][0] * CANVAS, pts[0][1] * CANVAS)
+          for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0] * CANVAS, pts[i][1] * CANVAS)
+          ctx.lineWidth = pl.bot ? 2.2 : 3.4
+          ctx.strokeStyle = col
+          ctx.globalAlpha = pl.bot ? 0.55 : 0.9
+          ctx.lineJoin = 'round'; ctx.lineCap = 'round'
+          ctx.stroke(); ctx.globalAlpha = 1
+        }
+        // current head
+        const head = pts[pts.length - 1]
+        if (head) {
+          ctx.beginPath(); ctx.arc(head[0] * CANVAS, head[1] * CANVAS, pl.bot ? 5 : 7, 0, Math.PI * 2)
           ctx.fillStyle = col; ctx.fill()
           ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(5,8,12,0.9)'; ctx.stroke()
-        } else if (N === 1) {
-          headTs = pl.tmin + (pl.tmax - pl.tmin) * prog
-          ctx.beginPath(); ctx.arc(P[0][0] * CANVAS, P[0][1] * CANVAS, pl.bot ? 5 : 7, 0, Math.PI * 2)
-          ctx.fillStyle = col; ctx.fill()
-        } else {
-          headTs = pl.tmin + (pl.tmax - pl.tmin) * prog
         }
-
-        // discrete events appear as the player's timeline reaches them
+        // discrete events revealed so far
         pl.events.forEach((q) => {
-          if (q[2] <= headTs && groupsOn(q[3])) drawMarker(ctx, q[3], q[0] * CANVAS, q[1] * CANVAS, 9)
+          if (q[2] <= cutoff && groupsOn(q[3])) drawMarker(ctx, q[3], q[0] * CANVAS, q[1] * CANVAS, 9)
         })
       })
     } else {
