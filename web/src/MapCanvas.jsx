@@ -57,28 +57,10 @@ export default function MapCanvas({
   showHumans, showBots, dayMatchSet, playback, onStats,
 }) {
   const wrapRef = useRef(null)
-  const innerRef = useRef(null)
   const canvasRef = useRef(null)
   const heatRef = useRef(null) // offscreen heat cache
   const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 })
   const drag = useRef(null)
-
-  // Keep the map from being dragged fully out of view: clamp tx/ty so a healthy
-  // portion of the minimap always overlaps the viewport (prevents the "black screen").
-  const clampView = useCallback((v) => {
-    const wrap = wrapRef.current, inner = innerRef.current
-    if (!wrap || !inner) return v
-    const W = wrap.clientWidth, H = wrap.clientHeight
-    const sw = inner.offsetWidth * v.scale, sh = inner.offsetHeight * v.scale
-    const slackX = W * 0.2, slackY = H * 0.2 // how far past the edge a drag may go
-    const maxX = Math.max(0, (sw - W) / 2) + slackX
-    const maxY = Math.max(0, (sh - H) / 2) + slackY
-    return {
-      scale: v.scale,
-      tx: Math.max(-maxX, Math.min(maxX, v.tx)),
-      ty: Math.max(-maxY, Math.min(maxY, v.ty)),
-    }
-  }, [])
 
   // --- filtered index set for AGGREGATE views (day + human/bot + groups) ---
   const filtered = useMemo(() => {
@@ -252,13 +234,13 @@ export default function MapCanvas({
       const factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15
       const ns = Math.max(1, Math.min(8, vw.scale * factor))
       const k = ns / vw.scale
-      return clampView({ scale: ns, tx: mx - k * (mx - vw.tx), ty: my - k * (my - vw.ty) })
+      return { scale: ns, tx: mx - k * (mx - vw.tx), ty: my - k * (my - vw.ty) }
     })
   }
   const onPointerDown = (ev) => { drag.current = { x: ev.clientX, y: ev.clientY, tx: view.tx, ty: view.ty }; ev.target.setPointerCapture(ev.pointerId) }
   const onPointerMove = (ev) => {
     if (!drag.current) return
-    setView((vw) => clampView({ ...vw, tx: drag.current.tx + (ev.clientX - drag.current.x), ty: drag.current.ty + (ev.clientY - drag.current.y) }))
+    setView((vw) => ({ ...vw, tx: drag.current.tx + (ev.clientX - drag.current.x), ty: drag.current.ty + (ev.clientY - drag.current.y) }))
   }
   const onPointerUp = () => { drag.current = null }
   const resetView = () => setView({ scale: 1, tx: 0, ty: 0 })
@@ -267,13 +249,13 @@ export default function MapCanvas({
     <div className="stage" ref={wrapRef}
       onWheel={onWheel} onPointerDown={onPointerDown} onPointerMove={onPointerMove}
       onPointerUp={onPointerUp} onPointerLeave={onPointerUp}>
-      <div className="stage-inner" ref={innerRef} style={{ transform: `translate(${view.tx}px,${view.ty}px) scale(${view.scale})` }}>
+      <div className="stage-inner" style={{ transform: `translate(${view.tx}px,${view.ty}px) scale(${view.scale})` }}>
         <img className="minimap" src={minimapUrl(mapCfg.image)} alt="minimap" draggable={false} />
         <canvas ref={canvasRef} width={CANVAS} height={CANVAS} className="overlay" />
       </div>
       <div className="zoom-tools">
-        <button onClick={() => setView((v) => clampView({ ...v, scale: Math.min(8, v.scale * 1.3) }))}>+</button>
-        <button onClick={() => setView((v) => clampView({ ...v, scale: Math.max(1, v.scale / 1.3) }))}>−</button>
+        <button onClick={() => setView((v) => ({ ...v, scale: Math.min(8, v.scale * 1.3) }))}>+</button>
+        <button onClick={() => setView((v) => ({ ...v, scale: Math.max(1, v.scale / 1.3) }))}>−</button>
         <button onClick={resetView} title="Reset view">⊙</button>
       </div>
       <div className="zoom-readout">{Math.round(view.scale * 100)}%</div>
