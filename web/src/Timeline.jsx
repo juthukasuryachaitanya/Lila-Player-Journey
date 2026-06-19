@@ -27,7 +27,7 @@ export default function Timeline({ active, playback, setPlayback, matchMeta }) {
       />
       <span className="tl-pct">{pct}%</span>
       <div className="tl-speed">
-        {[0.5, 1, 2, 4].map((s) => (
+        {[0.25,0.5, 1, 2, 4].map((s) => (
           <button key={s} className={speed === s ? 'on' : ''} onClick={() => setSpeed(s)}>{s}x</button>
         ))}
       </div>
