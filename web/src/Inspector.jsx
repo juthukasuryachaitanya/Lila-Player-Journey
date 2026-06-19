@@ -32,9 +32,11 @@ export default function Inspector({ mapId, dayFilter, matchId, statsCounts, matc
           const w = total ? Math.max(2, (n / total) * 100) : 0
           return (
             <div className="bar-row" key={g.id}>
-              <span className="bar-label" style={{ color: g.color }}>{g.label}</span>
+              <div className="bar-head">
+                <span className="bar-label" style={{ color: g.color }}>{g.label}</span>
+                <span className="bar-n">{fmt(n)}</span>
+              </div>
               <span className="bar-track"><span className="bar-fill" style={{ width: `${w}%`, background: g.color }} /></span>
-              <span className="bar-n">{fmt(n)}</span>
             </div>
           )
         })}
