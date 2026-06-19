@@ -1,0 +1,17 @@
+# deps / build
+node_modules/
+web/dist/
+.vite/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# OS
+.DS_Store
+
+# raw proprietary telemetry — do NOT commit (regenerate with pipeline/process.py)
+player_data/
+*.nakama-0
+*.zip
