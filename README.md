@@ -2,7 +2,7 @@
 
 A web tool that turns raw LILA BLACK telemetry into something a **Level Designer** can open in a browser and actually use: player journeys drawn on the real minimaps, humans vs bots, combat / loot / storm events, filtering by map · day · match, a per-match playback timeline, and kill / death / loot / traffic heatmaps.
 
-**Live demo:** `<add your Vercel/Netlify URL here after deploy>`
+**Live demo:** `https://lila-player-journey-pi.vercel.app/`
 
 ![console](docs/preview.png)
 
