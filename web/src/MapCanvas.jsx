@@ -66,6 +66,7 @@ export default function MapCanvas({
   // Keep the map from being dragged fully out of view: clamp tx/ty so a healthy
   // portion of the minimap always overlaps the viewport (prevents the "black screen").
   const clampView = useCallback((v) => {
+    if (!v) return { scale: 1, tx: 0, ty: 0 }
     const wrap = wrapRef.current, inner = innerRef.current
     if (!wrap || !inner) return v
     const W = wrap.clientWidth, H = wrap.clientHeight
@@ -251,34 +252,37 @@ export default function MapCanvas({
     const rect = wrapRef.current.getBoundingClientRect()
     const mx = ev.clientX - rect.left, my = ev.clientY - rect.top
     setView((vw) => {
+      const cur = vw || { scale: 1, tx: 0, ty: 0 }
       const factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15
-      const ns = Math.max(1, Math.min(8, vw.scale * factor))
-      const k = ns / vw.scale
-      return clampView({ scale: ns, tx: mx - k * (mx - vw.tx), ty: my - k * (my - vw.ty) })
+      const ns = Math.max(1, Math.min(8, cur.scale * factor))
+      const k = ns / cur.scale
+      return clampView({ scale: ns, tx: mx - k * (mx - cur.tx), ty: my - k * (my - cur.ty) })
     })
   }
-  const onPointerDown = (ev) => { drag.current = { x: ev.clientX, y: ev.clientY, tx: view.tx, ty: view.ty }; ev.target.setPointerCapture(ev.pointerId) }
+  const onPointerDown = (ev) => { const vv = view || { tx: 0, ty: 0 }; drag.current = { x: ev.clientX, y: ev.clientY, tx: vv.tx, ty: vv.ty }; ev.target.setPointerCapture(ev.pointerId) }
   const onPointerMove = (ev) => {
     if (!drag.current) return
-    setView((vw) => clampView({ ...vw, tx: drag.current.tx + (ev.clientX - drag.current.x), ty: drag.current.ty + (ev.clientY - drag.current.y) }))
+    setView((vw) => clampView({ ...(vw || { scale: 1, tx: 0, ty: 0 }), tx: drag.current.tx + (ev.clientX - drag.current.x), ty: drag.current.ty + (ev.clientY - drag.current.y) }))
   }
   const onPointerUp = () => { drag.current = null }
   const resetView = () => setView({ scale: 1, tx: 0, ty: 0 })
+
+  const v = view || { scale: 1, tx: 0, ty: 0 }
 
   return (
     <div className="stage" ref={wrapRef}
       onWheel={onWheel} onPointerDown={onPointerDown} onPointerMove={onPointerMove}
       onPointerUp={onPointerUp} onPointerLeave={onPointerUp}>
-      <div className="stage-inner" ref={innerRef} style={{ transform: `translate(${view.tx}px,${view.ty}px) scale(${view.scale})` }}>
+      <div className="stage-inner" ref={innerRef} style={{ transform: `translate(${v.tx}px,${v.ty}px) scale(${v.scale})` }}>
         <img className="minimap" src={minimapUrl(mapCfg.image)} alt="minimap" draggable={false} />
         <canvas ref={canvasRef} width={CANVAS} height={CANVAS} className="overlay" />
       </div>
       <div className="zoom-tools">
-        <button onClick={() => setView((v) => clampView({ ...v, scale: Math.min(8, v.scale * 1.3) }))}>+</button>
-        <button onClick={() => setView((v) => clampView({ ...v, scale: Math.max(1, v.scale / 1.3) }))}>−</button>
+        <button onClick={() => setView((s) => clampView({ ...(s || { scale: 1, tx: 0, ty: 0 }), scale: Math.min(8, (s ? s.scale : 1) * 1.3) }))}>+</button>
+        <button onClick={() => setView((s) => clampView({ ...(s || { scale: 1, tx: 0, ty: 0 }), scale: Math.max(1, (s ? s.scale : 1) / 1.3) }))}>−</button>
         <button onClick={resetView} title="Reset view">⊙</button>
       </div>
-      <div className="zoom-readout">{Math.round(view.scale * 100)}%</div>
+      <div className="zoom-readout">{Math.round(v.scale * 100)}%</div>
     </div>
   )
 }
