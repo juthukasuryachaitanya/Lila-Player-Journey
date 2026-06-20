@@ -60,13 +60,7 @@ export default function MapCanvas({
   const innerRef = useRef(null)
   const canvasRef = useRef(null)
   const heatRef = useRef(null) // offscreen heat cache
-  const DEFAULT_VIEW = Object.freeze({
-  scale: 1,
-  tx: 0,
-  ty: 0,
-})
-
-const [view, setView] = useState(DEFAULT_VIEW)
+  const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 })
   const drag = useRef(null)
 
   // Keep the map from being dragged fully out of view: clamp tx/ty so a healthy
@@ -257,41 +251,23 @@ const [view, setView] = useState(DEFAULT_VIEW)
     ev.preventDefault()
     const rect = wrapRef.current.getBoundingClientRect()
     const mx = ev.clientX - rect.left, my = ev.clientY - rect.top
-   setView((prev) => {
-  const safe = prev ?? DEFAULT_VIEW
-
-  const factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15
-  const ns = Math.max(1, Math.min(8, safe.scale * factor))
-  const k = ns / safe.scale
-
-  return clampView({
-    scale: ns,
-    tx: mx - k * (mx - safe.tx),
-    ty: my - k * (my - safe.ty)
-  })
-})
+    setView((vw) => {
+      const cur = vw || { scale: 1, tx: 0, ty: 0 }
+      const factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15
+      const ns = Math.max(1, Math.min(8, cur.scale * factor))
+      const k = ns / cur.scale
+      return clampView({ scale: ns, tx: mx - k * (mx - cur.tx), ty: my - k * (my - cur.ty) })
+    })
   }
   const onPointerDown = (ev) => { const vv = view || { tx: 0, ty: 0 }; drag.current = { x: ev.clientX, y: ev.clientY, tx: vv.tx, ty: vv.ty }; ev.target.setPointerCapture(ev.pointerId) }
   const onPointerMove = (ev) => {
     if (!drag.current) return
-    setView((prev) => {
-  const safe = prev ?? DEFAULT_VIEW
-
-  return clampView({
-    ...safe,
-    tx: drag.current.tx + (ev.clientX - drag.current.x),
-    ty: drag.current.ty + (ev.clientY - drag.current.y)
-  })
-})
+    setView((vw) => clampView({ ...(vw || { scale: 1, tx: 0, ty: 0 }), tx: drag.current.tx + (ev.clientX - drag.current.x), ty: drag.current.ty + (ev.clientY - drag.current.y) }))
   }
   const onPointerUp = () => { drag.current = null }
   const resetView = () => setView({ scale: 1, tx: 0, ty: 0 })
 
-  const v = {
-  scale: view?.scale ?? 1,
-  tx: view?.tx ?? 0,
-  ty: view?.ty ?? 0
-}
+  const v = view || { scale: 1, tx: 0, ty: 0 }
 
   return (
     <div className="stage" ref={wrapRef}
@@ -302,26 +278,8 @@ const [view, setView] = useState(DEFAULT_VIEW)
         <canvas ref={canvasRef} width={CANVAS} height={CANVAS} className="overlay" />
       </div>
       <div className="zoom-tools">
-        <button onClick={() =>
-  setView((prev) => {
-    const safe = prev ?? DEFAULT_VIEW
-
-    return clampView({
-      ...safe,
-      scale: Math.min(8, safe.scale * 1.3)
-    })
-  })
-}>+</button>
-        <button onClick={() =>
-  setView((prev) => {
-    const safe = prev ?? DEFAULT_VIEW
-
-    return clampView({
-      ...safe,
-      scale: Math.max(1, safe.scale / 1.3)
-    })
-  })
-}>−</button>
+        <button onClick={() => setView((s) => clampView({ ...(s || { scale: 1, tx: 0, ty: 0 }), scale: Math.min(8, (s ? s.scale : 1) * 1.3) }))}>+</button>
+        <button onClick={() => setView((s) => clampView({ ...(s || { scale: 1, tx: 0, ty: 0 }), scale: Math.max(1, (s ? s.scale : 1) / 1.3) }))}>−</button>
         <button onClick={resetView} title="Reset view">⊙</button>
       </div>
       <div className="zoom-readout">{Math.round(v.scale * 100)}%</div>
