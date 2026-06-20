@@ -46,12 +46,12 @@ export default function Inspector({ mapId, dayFilter, matchId, statsCounts, matc
         <div className="insp-match">
           <div className="insp-sub">Match {matchRecord.shortId}</div>
           <dl className="kv">
-            <div><dt>Day</dt><dd>{matchRecord.day.replace('_', ' ')}</dd></div>
             <div><dt>Humans</dt><dd>{matchRecord.humans}</dd></div>
             <div><dt>Bots</dt><dd>{matchRecord.bots}</dd></div>
-            <div><dt>Kills</dt><dd>{matchRecord.kills}</dd></div>
-            <div><dt>Deaths</dt><dd>{matchRecord.deaths}</dd></div>
-            <div><dt>Loot</dt><dd>{matchRecord.loot}</dd></div>
+            <div><dt>Human kills</dt><dd>{fmt(groupTotals['kill'] || 0)}</dd></div>
+            <div><dt>Bot kills</dt><dd>{fmt(groupTotals['killbot'] || 0)}</dd></div>
+            <div><dt>Deaths</dt><dd>{fmt((groupTotals['death'] || 0) + (groupTotals['storm'] || 0))}</dd></div>
+            <div><dt>Loot</dt><dd>{fmt(groupTotals['loot'] || 0)}</dd></div>
           </dl>
         </div>
       )}
