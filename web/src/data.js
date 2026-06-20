@@ -47,7 +47,7 @@ export const POIS = {
     { u: 0.386, v: 0.795, name: 'River Docks' },
     { u: 0.614, v: 0.386, name: 'East Depot' },
   ],
-
+  // GrandRift intentionally omitted — its minimap already has built-in labels.
   Lockdown: [
     { u: 0.614, v: 0.523, name: 'East Block' },
     { u: 0.205, v: 0.614, name: 'SW Yard' },

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { loadManifest, loadMap, EVENT_GROUPS } from './data.js'
 import MapCanvas from './MapCanvas.jsx'
+import MapErrorBoundary from './MapErrorBoundary.jsx'
 import Controls from './Controls.jsx'
 import Timeline from './Timeline.jsx'
 import Inspector from './Inspector.jsx'
@@ -117,16 +118,18 @@ export default function App() {
       <main className="main">
         <div className="canvas-wrap">
           {mapData && !loadingMap ? (
-            <MapCanvas
-              key={mapId}
-              mapCfg={manifest.maps[mapId]} data={mapData}
-              mode={mode} selectedMatch={selectedMatchIndex}
-              heatMetric={mode === 'match' ? null : heatMetric}
-              visibleGroups={visibleGroups}
-              showHumans={showHumans} showBots={showBots}
-              dayMatchSet={dayMatchSet}
-              playback={playback} onStats={onStats}
-            />
+            <MapErrorBoundary>
+              <MapCanvas
+                key={mapId}
+                mapCfg={manifest.maps[mapId]} data={mapData}
+                mode={mode} selectedMatch={selectedMatchIndex}
+                heatMetric={mode === 'match' ? null : heatMetric}
+                visibleGroups={visibleGroups}
+                showHumans={showHumans} showBots={showBots}
+                dayMatchSet={dayMatchSet}
+                playback={playback} onStats={onStats}
+              />
+            </MapErrorBoundary>
           ) : (
             <div className="boot center"><span className="spinner" /> Loading {mapId}…</div>
           )}

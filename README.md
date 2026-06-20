@@ -115,3 +115,14 @@ The data has a few quirks that shaped the build; the full list with how each was
 - Minimaps are **not** 1024×1024 as the README states — they're 2160²–9000². Coordinates are stored normalized (0–1) so rendering is resolution-independent.
 - `ts` spans **under a second per match**, so it is used for event **ordering**, not as real elapsed seconds. Playback is sequence-normalized and labelled as such in the UI.
 - Bots vs humans are detected from the `user_id` shape (UUID = human, short numeric = bot), per the dataset README.
+
+---
+
+## Known Issues & Future Work
+
+A rare, environment-specific map blank-out can occur on some GPUs during rapid
+pan/zoom on the hosted build. It's a contained client-side render exception, not
+a graphics failure — the app now degrades to a recoverable "reset" card via an
+error boundary instead of going black. Full root-cause analysis, the mitigations
+shipped, and the planned structural fix are documented in
+[KNOWN_ISSUES.md](./KNOWN_ISSUES.md).

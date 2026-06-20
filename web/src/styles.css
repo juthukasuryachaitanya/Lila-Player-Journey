@@ -157,6 +157,13 @@ select:focus { outline: none; border-color: var(--accent); }
 }
 .zoom-tools button.on { border-color: var(--accent); color: var(--accent); }
 
+/* contained map-failure fallback (error boundary) */
+.map-fallback { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.map-fallback-card { max-width: 330px; text-align: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 20px; }
+.map-fallback-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; }
+.map-fallback-card p { color: var(--dim); font-size: 12px; line-height: 1.55; margin: 0 0 16px; }
+.map-fallback-card button { background: var(--accent); color: var(--bg); border: none; border-radius: 8px; padding: 9px 16px; font-weight: 600; font-size: 12.5px; }
+
 .zoom-tools { position: absolute; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 5px; }
 .zoom-tools button {
   width: 32px; height: 32px; border-radius: 8px;
