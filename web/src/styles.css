@@ -143,6 +143,20 @@ select:focus { outline: none; border-color: var(--accent); }
 .minimap { object-fit: cover; filter: saturate(.92) brightness(.92); user-select: none; }
 .overlay { pointer-events: none; }
 
+/* place-name labels (positioned in screen space, constant size) */
+.poi { position: absolute; transform: translate(-50%, -50%); pointer-events: none; z-index: 5; }
+.poi::before {
+  content: ''; position: absolute; left: 50%; top: -9px; transform: translateX(-50%);
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 7px var(--accent);
+}
+.poi-name {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: #eef4ff; background: rgba(9,13,19,.66); padding: 2px 7px; border-radius: 5px;
+  border: 1px solid rgba(198,242,78,.28); white-space: nowrap; backdrop-filter: blur(2px);
+}
+.zoom-tools button.on { border-color: var(--accent); color: var(--accent); }
+
 .zoom-tools { position: absolute; right: 14px; bottom: 14px; display: flex; flex-direction: column; gap: 5px; }
 .zoom-tools button {
   width: 32px; height: 32px; border-radius: 8px;

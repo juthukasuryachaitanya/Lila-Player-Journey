@@ -37,6 +37,30 @@ export const COLORS = {
   accent: '#C6F24E',
 }
 
+// Named hotspots per map, placed on the busiest activity clusters in the data
+// (positions are normalized u,v). Names are inferred from the minimap landmarks.
+export const POIS = {
+  AmbroseValley: [
+    { u: 0.523, v: 0.568, name: 'Central Compound' },
+    { u: 0.114, v: 0.386, name: 'West Facility' },
+    { u: 0.205, v: 0.841, name: 'South Estate' },
+    { u: 0.386, v: 0.795, name: 'River Docks' },
+    { u: 0.614, v: 0.386, name: 'East Depot' },
+  ],
+  GrandRift: [
+    { u: 0.477, v: 0.568, name: 'Central Rift' },
+    { u: 0.205, v: 0.477, name: 'West Ridge' },
+    { u: 0.841, v: 0.523, name: 'East Span' },
+    { u: 0.432, v: 0.386, name: 'North Pass' },
+  ],
+  Lockdown: [
+    { u: 0.614, v: 0.523, name: 'East Block' },
+    { u: 0.205, v: 0.614, name: 'SW Yard' },
+    { u: 0.205, v: 0.386, name: 'NW Gate' },
+    { u: 0.523, v: 0.250, name: 'North Tower' },
+  ],
+}
+
 // Heatmap metrics: which events feed the density field, and the ramp tint.
 export const HEAT_METRICS = [
   { id: 'traffic', label: 'Traffic', codes: [EVENT.Position, EVENT.BotPosition], ramp: 'plasma' },

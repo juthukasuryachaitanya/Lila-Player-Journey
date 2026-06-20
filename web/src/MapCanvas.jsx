@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import { EVENT, GROUP_OF_CODE, COLORS, HEAT_METRICS, minimapUrl } from './data.js'
+import { EVENT, GROUP_OF_CODE, COLORS, HEAT_METRICS, POIS, minimapUrl } from './data.js'
 
 const CANVAS = 1280 // internal resolution (smaller = lighter GPU layer); CSS scales the stage for zoom
 
@@ -66,6 +66,20 @@ export default function MapCanvas({
   const heatRef = useRef(null) // offscreen heat cache
   const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 })
   const drag = useRef(null)
+  const [box, setBox] = useState({ w: 0, h: 0, iw: 0 }) // stage + inner pixel sizes for POI placement
+  const [showPois, setShowPois] = useState(true)
+
+  // track stage / inner pixel size so POI labels can be positioned in screen space
+  useEffect(() => {
+    const wrap = wrapRef.current
+    if (!wrap || typeof ResizeObserver === 'undefined') return
+    const update = () => {
+      const inner = innerRef.current
+      setBox({ w: wrap.clientWidth, h: wrap.clientHeight, iw: inner ? inner.offsetWidth : 0 })
+    }
+    const ro = new ResizeObserver(update); ro.observe(wrap); update()
+    return () => ro.disconnect()
+  }, [])
 
   // Keep the map from being dragged fully out of view: clamp tx/ty so a healthy
   // portion of the minimap always overlaps the viewport (prevents the "black screen").
@@ -254,7 +268,8 @@ export default function MapCanvas({
   const onWheel = (ev) => {
     ev.preventDefault()
     const rect = wrapRef.current.getBoundingClientRect()
-    const mx = ev.clientX - rect.left, my = ev.clientY - rect.top
+    // measure cursor relative to the map CENTER (the transform scales about center)
+    const mx = ev.clientX - rect.left - rect.width / 2, my = ev.clientY - rect.top - rect.height / 2
     setView((vw) => {
       const cur = vw || { scale: 1, tx: 0, ty: 0 }
       const factor = ev.deltaY < 0 ? 1.15 : 1 / 1.15
@@ -272,6 +287,7 @@ export default function MapCanvas({
   const resetView = () => setView({ scale: 1, tx: 0, ty: 0 })
 
   const v = view || { scale: 1, tx: 0, ty: 0 }
+  const pois = POIS[(mapCfg.image || '').replace(/\.jpg$/, '')] || []
 
   return (
     <div className="stage" ref={wrapRef}
@@ -281,10 +297,20 @@ export default function MapCanvas({
         <img className="minimap" src={minimapUrl(mapCfg.image)} alt="minimap" draggable={false} />
         <canvas ref={canvasRef} width={CANVAS} height={CANVAS} className="overlay" />
       </div>
+      {showPois && pois.map((p) => {
+        const x = box.w / 2 + v.tx + v.scale * (p.u - 0.5) * box.iw
+        const y = box.h / 2 + v.ty + v.scale * (p.v - 0.5) * box.iw
+        return (
+          <div className="poi" key={p.name} style={{ left: `${x}px`, top: `${y}px` }}>
+            <span className="poi-name">{p.name}</span>
+          </div>
+        )
+      })}
       <div className="zoom-tools">
         <button onClick={() => setView((s) => clampView({ ...(s || { scale: 1, tx: 0, ty: 0 }), scale: Math.min(8, (s ? s.scale : 1) * 1.3) }))}>+</button>
         <button onClick={() => setView((s) => clampView({ ...(s || { scale: 1, tx: 0, ty: 0 }), scale: Math.max(1, (s ? s.scale : 1) / 1.3) }))}>−</button>
         <button onClick={resetView} title="Reset view">⊙</button>
+        <button onClick={() => setShowPois((s) => !s)} title="Toggle place labels" className={showPois ? 'on' : ''}>⌖</button>
       </div>
       <div className="zoom-readout">{Math.round(v.scale * 100)}%</div>
     </div>
