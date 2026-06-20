@@ -77,6 +77,8 @@ export default function MapCanvas({
   const sceneRef = useRef(null)     // offscreen: heatmap + markers (aggregate)
   const redrawRef = useRef(() => {})
   const drag = useRef(null)
+  const rafRef = useRef(0)
+  const pendingRef = useRef(null)
   const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 })
   const [, setImgTick] = useState(0)
 
@@ -174,7 +176,7 @@ export default function MapCanvas({
     if (mode === 'match') { sceneRef.current = null; redrawRef.current(); return }
     const SCENE = 1600
     const off = document.createElement('canvas'); off.width = SCENE; off.height = SCENE
-    const octx = off.getContext('2d')
+    const octx = off.getContext('2d', { willReadFrequently: true })
 
     if (heatMetric) {
       const metric = HEAT_METRICS.find((h) => h.id === heatMetric)
@@ -199,7 +201,7 @@ export default function MapCanvas({
       let max = 0
       for (let i = 0; i < acc.length; i++) if (acc[i] > max) max = acc[i]
       const ho = document.createElement('canvas'); ho.width = HM; ho.height = HM
-      const hctx = ho.getContext('2d')
+      const hctx = ho.getContext('2d', { willReadFrequently: true })
       const img = hctx.createImageData(HM, HM)
       const stops = RAMPS[metric.ramp]
       for (let i = 0; i < acc.length; i++) {
@@ -238,11 +240,14 @@ export default function MapCanvas({
   const redraw = useCallback((progressOverride) => {
     const cv = canvasRef.current, wrap = wrapRef.current
     if (!cv || !wrap) return
-    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
     const W = wrap.clientWidth, H = wrap.clientHeight
     const bw = Math.round(W * dpr), bh = Math.round(H * dpr)
     if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh }
-    const ctx = cv.getContext('2d')
+    // willReadFrequently keeps this canvas on the CPU path -> avoids GPU-driver
+    // black-screens during heavy drag repaints on some machines.
+    const ctx = cv.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, W, H)
 
@@ -318,6 +323,28 @@ export default function MapCanvas({
     return () => ro.disconnect()
   }, [])
 
+  // recover if the GPU drops the canvas context (driver hiccup) instead of going black
+  useEffect(() => {
+    const cv = canvasRef.current
+    if (!cv) return
+    const onLost = (e) => { e.preventDefault() }
+    const onRestored = () => redrawRef.current()
+    cv.addEventListener('contextlost', onLost)
+    cv.addEventListener('contextrestored', onRestored)
+    return () => { cv.removeEventListener('contextlost', onLost); cv.removeEventListener('contextrestored', onRestored) }
+  }, [])
+
+  // recover gracefully if the browser ever drops the 2D context
+  useEffect(() => {
+    const cv = canvasRef.current
+    if (!cv) return
+    const onLost = (e) => { e.preventDefault() }
+    const onRestored = () => { redrawRef.current() }
+    cv.addEventListener('contextlost', onLost)
+    cv.addEventListener('contextrestored', onRestored)
+    return () => { cv.removeEventListener('contextlost', onLost); cv.removeEventListener('contextrestored', onRestored) }
+  }, [])
+
   // ----- zoom (native non-passive wheel) / pan -----
   useEffect(() => {
     const wrap = wrapRef.current
@@ -341,7 +368,13 @@ export default function MapCanvas({
   const onPointerDown = (ev) => { drag.current = { x: ev.clientX, y: ev.clientY, tx: view.tx, ty: view.ty }; ev.target.setPointerCapture(ev.pointerId) }
   const onPointerMove = (ev) => {
     if (!drag.current) return
-    setView((vw) => clampView({ ...vw, tx: drag.current.tx + (ev.clientX - drag.current.x), ty: drag.current.ty + (ev.clientY - drag.current.y) }))
+    pendingRef.current = clampView({ scale: view.scale, tx: drag.current.tx + (ev.clientX - drag.current.x), ty: drag.current.ty + (ev.clientY - drag.current.y) })
+    if (!rafRef.current) {
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = 0
+        if (pendingRef.current) setView(pendingRef.current)
+      })
+    }
   }
   const onPointerUp = () => { drag.current = null }
   const zoomBy = (k) => setView((v) => clampView({ ...v, scale: Math.max(1, Math.min(8, v.scale * k)) }))
