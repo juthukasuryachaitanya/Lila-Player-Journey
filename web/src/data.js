@@ -47,12 +47,7 @@ export const POIS = {
     { u: 0.386, v: 0.795, name: 'River Docks' },
     { u: 0.614, v: 0.386, name: 'East Depot' },
   ],
-  GrandRift: [
-    { u: 0.477, v: 0.568, name: 'Central Rift' },
-    { u: 0.205, v: 0.477, name: 'West Ridge' },
-    { u: 0.841, v: 0.523, name: 'East Span' },
-    { u: 0.432, v: 0.386, name: 'North Pass' },
-  ],
+
   Lockdown: [
     { u: 0.614, v: 0.523, name: 'East Block' },
     { u: 0.205, v: 0.614, name: 'SW Yard' },
