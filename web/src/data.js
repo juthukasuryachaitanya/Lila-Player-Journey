@@ -20,7 +20,8 @@ export const EVENT_NAME = Object.fromEntries(Object.entries(EVENT).map(([k, v]) 
 export const EVENT_GROUPS = [
   { id: 'movement', label: 'Movement', codes: [EVENT.Position, EVENT.BotPosition], color: '#4DA6FF', marker: 'dot' },
   { id: 'loot', label: 'Loot', codes: [EVENT.Loot], color: '#FFC53D', marker: 'diamond' },
-  { id: 'kill', label: 'Kills (by human)', codes: [EVENT.Kill, EVENT.BotKill], color: '#7CFF6B', marker: 'frag' },
+  { id: 'killhuman', label: 'Kills (by human)', codes: [EVENT.Kill], color: '#7CFF6B', marker: 'frag' },
+  { id: 'killbot', label: 'Kills (bot)', codes: [EVENT.BotKill], color: '#7CFF6B', marker: 'frag' },
   { id: 'death', label: 'Deaths', codes: [EVENT.Killed, EVENT.BotKilled], color: '#FF5470', marker: 'cross' },
   { id: 'storm', label: 'Storm deaths', codes: [EVENT.KilledByStorm], color: '#B98CFF', marker: 'storm' },
 ]
