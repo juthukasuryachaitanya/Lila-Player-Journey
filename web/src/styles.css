@@ -134,7 +134,6 @@ select:focus { outline: none; border-color: var(--accent); }
   width: min(96%, 96vh); aspect-ratio: 1 / 1;
   translate: -50% -50%;
   transform-origin: center center;
-  will-change: transform;
   box-shadow: 0 14px 60px rgba(0,0,0,.6);
   border: 1px solid #2a3340;
   border-radius: 4px;

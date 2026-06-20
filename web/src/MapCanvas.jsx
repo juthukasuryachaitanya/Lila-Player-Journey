@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { EVENT, GROUP_OF_CODE, COLORS, HEAT_METRICS, minimapUrl } from './data.js'
 
-const CANVAS = 2048 // internal resolution; CSS scales the stage for zoom
+const CANVAS = 1280 // internal resolution (smaller = lighter GPU layer); CSS scales the stage for zoom
 
 // ---- color ramps for heatmaps (t in 0..1) -------------------------------------------
 const RAMPS = {
@@ -155,7 +155,7 @@ export default function MapCanvas({
     let max = 0
     for (let i = 0; i < acc.length; i++) if (acc[i] > max) max = acc[i]
     const off = document.createElement('canvas'); off.width = HM; off.height = HM
-    const octx = off.getContext('2d')
+    const octx = off.getContext('2d', { willReadFrequently: true })
     const img = octx.createImageData(HM, HM)
     const stops = RAMPS[metric.ramp]
     for (let i = 0; i < acc.length; i++) {
@@ -175,7 +175,9 @@ export default function MapCanvas({
   const redraw = useCallback((progressOverride) => {
     const cv = canvasRef.current
     if (!cv) return
-    const ctx = cv.getContext('2d')
+    // willReadFrequently keeps the canvas CPU-backed, avoiding the GPU
+    // compositing path that black-screens on some drivers.
+    const ctx = cv.getContext('2d', { willReadFrequently: true })
     ctx.clearRect(0, 0, CANVAS, CANVAS)
 
     // heatmap underlay
