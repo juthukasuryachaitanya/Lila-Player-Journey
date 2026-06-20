@@ -37,6 +37,10 @@ function drawMarker(ctx, code, x, y, r) {
       ctx.beginPath()
       ctx.moveTo(0, -r * 1.15); ctx.lineTo(r, r * 0.8); ctx.lineTo(-r, r * 0.8); ctx.closePath()
       ctx.fill(); ctx.stroke(); break
+    case 'fragDown': // downward triangle (a kill made by a bot)
+      ctx.beginPath()
+      ctx.moveTo(0, r * 1.15); ctx.lineTo(r, -r * 0.8); ctx.lineTo(-r, -r * 0.8); ctx.closePath()
+      ctx.fill(); ctx.stroke(); break
     case 'cross': // an X (a death)
       ctx.lineWidth = Math.max(2, r * 0.6); ctx.strokeStyle = g.color
       ctx.beginPath()

@@ -5,7 +5,7 @@ import Controls from './Controls.jsx'
 import Timeline from './Timeline.jsx'
 import Inspector from './Inspector.jsx'
 
-const DEFAULT_GROUPS = new Set(['loot', 'kill', 'death', 'storm']) // movement off by default
+const DEFAULT_GROUPS = new Set(['loot', 'kill', 'killbot', 'death', 'storm']) // movement off by default
 
 export default function App() {
   const [manifest, setManifest] = useState(null)
