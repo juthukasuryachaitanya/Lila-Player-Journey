@@ -109,8 +109,13 @@ def build_matches(df: pd.DataFrame):
             "rows": int(len(g)),
             "tsMin": int(ts.min()),
             "tsMax": int(ts.max()),
-            "kills": int(ev.get("Kill", 0) + ev.get("BotKill", 0)),
-            "deaths": int(ev.get("Killed", 0) + ev.get("BotKilled", 0) + ev.get("KilledByStorm", 0)),
+            # Combat broken out by actor, mirroring the UI groups (see ARCHITECTURE.md).
+            # Event names describe the VICTIM: BotKill = a human killed a bot,
+            # BotKilled = a human was killed by a bot.
+            "humanKills": int(ev.get("Kill", 0) + ev.get("BotKill", 0)),  # kills by a human
+            "botKills": int(ev.get("BotKilled", 0)),                       # kills by a bot (human deaths to bots)
+            "pvpDeaths": int(ev.get("Killed", 0)),                         # human killed by a human
+            "stormDeaths": int(ev.get("KilledByStorm", 0)),               # human killed by the storm
             "loot": int(ev.get("Loot", 0)),
         })
     matches.sort(key=lambda m: (m["day"], m["map"], m["id"]))
