@@ -76,6 +76,14 @@ select {
 }
 select:focus { outline: none; border-color: var(--accent); }
 
+.match-search {
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 9px 10px; font-size: 12.5px;
+  width: 100%; margin-bottom: 8px;
+}
+.match-search:focus { outline: none; border-color: var(--accent); }
+.match-search::placeholder { color: var(--dim); }
+
 .map-pills { display: flex; flex-direction: column; gap: 6px; }
 .map-pill {
   display: flex; justify-content: space-between; align-items: center;

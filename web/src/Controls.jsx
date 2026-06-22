@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { EVENT_GROUPS, HEAT_METRICS, COLORS, prettyDay, fmt } from './data.js'
 
 function Segment({ options, value, onChange }) {
@@ -17,6 +18,19 @@ export default function Controls({
   matchId, setMatchId, matches, visibleGroups, toggleGroup,
   showHumans, setShowHumans, showBots, setShowBots, heatMetric, setHeatMetric,
 }) {
+  // match search: filter the dropdown by match id (e.g. paste a reported match_id)
+  const [matchQuery, setMatchQuery] = useState('')
+  useEffect(() => { setMatchQuery('') }, [mapId]) // reset when switching maps
+
+  const q = matchQuery.trim().toLowerCase()
+  const filtered = q
+    ? matches.filter((m) => m.id.toLowerCase().includes(q) || m.shortId.toLowerCase().includes(q))
+    : matches
+  // keep the currently-selected match in the list even if the query excludes it
+  const shownMatches = (matchId !== 'all' && !filtered.some((m) => m.id === matchId))
+    ? [...matches.filter((m) => m.id === matchId), ...filtered]
+    : filtered
+
   return (
     <aside className="rail">
       <div className="brand">
@@ -49,17 +63,29 @@ export default function Controls({
 
       <section className="ctrl">
         <label className="ctrl-label">Match {matchId !== 'all' && <span className="tag-live">playback ready</span>}</label>
+        <input
+          className="match-search"
+          type="text"
+          placeholder="Search match ID…"
+          value={matchQuery}
+          onChange={(e) => setMatchQuery(e.target.value)}
+          spellCheck={false}
+        />
         <select value={matchId} onChange={(e) => setMatchId(e.target.value)}>
-          <option value="all">All matches ({matches.length})</option>
-          {matches.map((m) => (
+          <option value="all">
+            {q ? `All matches (${filtered.length} of ${matches.length})` : `All matches (${matches.length})`}
+          </option>
+          {shownMatches.map((m) => (
             <option key={m.id} value={m.id}>
               {m.shortId} · {m.humans}H/{m.bots}B · {m.rows} ev
             </option>
           ))}
         </select>
-        {matchId === 'all'
-          ? <p className="hint">Pick a match to draw player journeys and scrub the timeline.</p>
-          : <p className="hint">Showing one match. Switch back to <b>All matches</b> for heatmaps.</p>}
+        {q && filtered.length === 0
+          ? <p className="hint">No match ID contains “{matchQuery.trim()}”.</p>
+          : matchId === 'all'
+            ? <p className="hint">Pick a match to draw player journeys and scrub the timeline.</p>
+            : <p className="hint">Showing one match. Switch back to <b>All matches</b> for heatmaps.</p>}
       </section>
 
       <section className="ctrl">

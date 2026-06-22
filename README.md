@@ -16,7 +16,7 @@ A web tool that turns raw LILA BLACK telemetry into something a **Level Designer
 | Humans (cyan) vs bots (amber), toggleable | left rail → Actors |
 | Distinct markers: **kills by human**, **kills by bot**, deaths, loot, storm | left rail → Events |
 | Named hotspot labels (**POIs**) per map, toggleable | center canvas (⌖ button) |
-| Filter by map / day / match | left rail |
+| Filter by map / day / match (search match by ID) | left rail |
 | Smoothed timeline playback of a single match | bottom scrubber |
 | Heatmaps: traffic, kill zones, death zones, loot zones | left rail → Heatmap |
 | Pan + **cursor-anchored** zoom (1×–8×) | scroll / drag, zoom tools bottom-right |
