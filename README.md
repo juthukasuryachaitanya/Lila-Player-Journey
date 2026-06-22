@@ -109,15 +109,13 @@ build: cd web && npm install && npm run build   |   output: web/dist
 
 **GitHub Pages / any static host** — upload the contents of `web/dist`. Vite is configured with `base: './'` so it works from any sub-path.
 
-After deploying, paste the URL into the **Live demo** line above.
-
 ---
 
 ## Notes / assumptions
 
 The data has a few quirks that shaped the build; the full list with how each was handled is in [ARCHITECTURE.md](./ARCHITECTURE.md#assumptions). The headline ones:
 
-- Minimaps are **not** 1024×1024 as the README states — they're 2160²–9000². Coordinates are stored normalized (0–1) so rendering is resolution-independent.
+- Minimaps are **not** 1024×1024 as the dataset's own README states — they're 2160²–9000². Coordinates are stored normalized (0–1) so rendering is resolution-independent.
 - `ts` spans **under a second per match**, so it is used for event **ordering**, not as real elapsed seconds. Playback is sequence-normalized and labelled as such in the UI.
 - Bots vs humans are detected from the `user_id` shape (UUID = human, short numeric = bot), per the dataset README.
 - Combat events are grouped by **who pulled the trigger**: "Kills by human" = a player's kills (`Kill` + `BotKill`), "Kills by bot" = a player killed by a bot (`BotKilled`). The event name `BotKill` is misleading — it means *a human killed a bot*, not a bot kill (see ARCHITECTURE.md).
