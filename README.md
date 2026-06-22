@@ -50,6 +50,9 @@ lila-player-journey/
 │   └── package.json
 ├── vercel.json               # deploy config (Vercel)
 ├── netlify.toml              # deploy config (Netlify)
+├── docs/
+│   └── preview.png           # screenshot shown in this README
+├── README.md                 # this file
 ├── ARCHITECTURE.md           # design + coordinate-mapping walkthrough + tradeoffs
 ├── INSIGHTS.md               # three things the tool revealed about the game
 └── KNOWN_ISSUES.md           # known issue analysis + future work
